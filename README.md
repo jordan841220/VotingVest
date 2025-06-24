@@ -1,8 +1,21 @@
 # VotingVest
+This project leverages multiple technical indicators to perform a **MAJORITY VOTE** and brute‑force all possible indicator combinations, backtests each strategy’s performance, and then selects the best combination
 
 ## Goal
+這是一個自動化的股票分析工具，它會從 Yahoo Finance 下載股價，計算常見的技術指標（如 RSI、MACD、布林帶等），並根據這些指標給出買賣信號。接著，工具會測試不同指標組合的歷史表現，幫你找到最有效的策略，並生成簡易的績效圖表和最終建議。
+<br>
+<br>
+This is an automated stock tool that downloads price data from Yahoo Finance, calculates common technical indicators (e.g. RSI, MACD, Bollinger Bands), and generates buy/sell signals. It then backtests different indicator combinations to find the best strategy and creates basic performance charts along with a final recommendation.
 
-This project leverages multiple technical indicators to perform a **MAJORITY VOTE** and brute‑force all possible indicator combinations, backtests each strategy’s performance, and then selects the best combination
+<br>
+<br>
+具體上來說，它會自動從 Yahoo Finance 抓取股票歷史價格數據，計算多達數十種常用技術指標（如 RSI、MACD、布林帶、一目均衡表等），並為每個指標生成買入／賣出信號。接著，工具透過多進程並行運行「多數投票」機制，針對不同指標組合進行回測，評估包括總報酬、夏普比率、勝率與最大回撤等績效指標，並自動產生多種圖表（例如報酬 vs. 夏普散點圖、交易收益分佈直方圖、權益曲線與回撤曲線）。最終，它會挑出表現最優的指標組合，給出當前的交易建議，並將所有結果與圖檔儲存到本地。
+
+<br>
+<br>
+
+It automatically fetches historical stock price data from Yahoo Finance, computes dozens of popular technical indicators (such as RSI, MACD, Bollinger Bands, Ichimoku Cloud, etc.), and generates buy/sell signals for each indicator. It then employs a parallel “majority voting” process to backtest various indicator combinations, evaluating performance metrics like total return, Sharpe ratio, win rate, and maximum drawdown. The tool produces visual summaries—return vs. Sharpe scatter plots, trade return histograms, equity & drawdown curves—and identifies the top-performing combination, offering a current trading recommendation. All results and plots are saved locally for further review.
+
 
 - Backtesting: Calculates cumulative return, Sharpe ratio, win rate, total trades, maximum drawdown, etc.
 - Decision Making: Generates a "Strong Buy", "Hold / Buy", or "Close / No Buy" recommendation for the current day based on the top-performing indicator combination. (Short-selling is not implemented; "Close" strictly means **CLOSING** any existing long position.)
