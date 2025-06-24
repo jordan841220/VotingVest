@@ -7,12 +7,40 @@ This project leverages multiple technical indicators to perform a **MAJORITY VOT
 - Backtesting: Calculates cumulative return, Sharpe ratio, win rate, total trades, maximum drawdown, etc.
 - Decision Making: Generates a "Strong Buy", "Hold / Buy", or "Close / No Buy" recommendation for the current day based on the top-performing indicator combination. (Short-selling is not implemented; "Close" strictly means **CLOSING** any existing long position.)
 
+<br>
+
+## Usage
+```
+python strategy.py <ticker> <threads> <member>
+```
+- [ticker]: (required) stock symbol (e.g., AAPL, MSFT, GOOG)
+- [threads]: (optional) number of worker processes for vote computation; default = 20.
+- [member]: (optional) size of each indicator group (must be odd); default = 7.
+
+### The script will:
+
+1. Download historical data (all period) from Yahoo Finance
+2. Compute all technical indicators
+3. Generate signals via **MAJORITY VOTE** over all "odd-length" (specified by [member]) indicator combinations
+4. Backtest each combination’s performance
+5. Rank combinations using Min‑Max normalization and select the top 3 (exclude the combinations with <5 trading counts)
+6. Plot performance charts and output today’s recommendation based on the best combo
+
+Happy backtesting and good luck with your trading insights! 🎯
+
+
+<br>
+
+
+
 ## Prerequisites
 - Python: Version 3.8 or higher
 - Python Packages:
 ```
 pip install pandas numpy yfinance TA-Lib matplotlib tqdm
 ```
+
+<br>
 
 ## Indicators and Criteria
 The indicators we consider in the script:
@@ -75,22 +103,4 @@ The indicators we consider in the script:
 - Aroon Up/Down crossover** → Buy/Close
 - ROC (ROC_10)**: ROC > 0 → Buy; ROC < 0 → Close
 
-## Usage
-```
-python strategy.py <ticker> <threads> <member>
-```
-- [ticker]: (required) stock symbol (e.g., AAPL, MSFT, GOOG)
-- [threads]: (optional) number of worker processes for vote computation; default = 20.
-- [member]: (optional) size of each indicator group (must be odd); default = 7.
-
-### The script will:
-
-1. Download historical data (all period) from Yahoo Finance
-2. Compute all technical indicators
-3. Generate signals via **MAJORITY VOTE** over all "odd-length" (specified by [member]) indicator combinations
-4. Backtest each combination’s performance
-5. Rank combinations using Min‑Max normalization and select the top 3 (exclude the combinations with <5 trading counts)
-6. Plot performance charts and output today’s recommendation based on the best combo
-
-Happy backtesting and good luck with your trading insights! 🎯
 

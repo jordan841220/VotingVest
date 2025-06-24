@@ -12,6 +12,7 @@ import itertools
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 import sys
+import argparse
 
 
 ################################################################################################
@@ -651,9 +652,9 @@ if __name__ == "__main__":
                         help="Number of worker processes (default: 20)")
     parser.add_argument("-m", "--member", type=int, default=7,
                         help="Size of each indicator group (odd, default: 7)")
-    parser.add_argument("--start", type=str, default=None,
+    parser.add_argument("-s", "--start", type=str, default=None,
                         help="Start date YYYY-MM-DD (default: earliest)")
-    parser.add_argument("--end",   type=str, default=None,
+    parser.add_argument("-e", "--end",   type=str, default=None,
                         help="End date YYYY-MM-DD (default: today)")
     args = parser.parse_args()
 
