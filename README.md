@@ -21,15 +21,15 @@ It automatically fetches historical stock price data from Yahoo Finance, compute
 
 ## Usage
 
-### browser
-Run the following code in command line and open http://localhost:3322 on browser:
+### 1. GUI
+Run the following code in your terminal and open http://localhost:3322 on your browser:
 ```
 python app.py
 ```
 
 
-### command-line
-You can all use the script in command-line mode:
+### 2. CLI
+You can also run the following script in terminal directly:
 ```
 python strategy.py <ticker> <threads> <member>
 ```
