@@ -13,6 +13,9 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 import sys
 import argparse
+import math
+import os
+import pickle
 
 
 ################################################################################################
@@ -438,6 +441,7 @@ def backtest_indicator_plot(df: pd.DataFrame, signals: pd.Series, title: str) ->
     )
 
     # cumulative return (%)
+    df_bt['ret'] = df_bt['Close'].pct_change() * df_bt['position'].shift(1)
     cumulative = (1 + df_bt['ret'].fillna(0)).cumprod()
     df_bt['cumulative'] = cumulative
 
@@ -459,7 +463,7 @@ def backtest_indicator_plot(df: pd.DataFrame, signals: pd.Series, title: str) ->
     print(f"Saved backtest plot to {filename}")
 
 ################################################################################################
-def calculate_score(backtest_res):
+def calculate_score(backtest_res, min_trade_counts: int):
 
     df = pd.DataFrame(backtest_res).T.reset_index().rename(columns={'index': 'combination'})
     
@@ -483,7 +487,7 @@ def calculate_score(backtest_res):
     df['score'] = df[score_cols].sum(axis=1)
     
     # exclude trading counts < 5
-    df = df[df['total_trades'] >= 5]
+    df = df[df['total_trades'] >= min_trade_counts]
     # sort by score
     df_sorted = df.sort_values(by='score').reset_index(drop=True).head(3)
     
@@ -502,6 +506,17 @@ def _compute_one_consensus(args):
         winners = [label for label, cnt in counts.items() if cnt == max_count]
         return winners[0] if len(winners) == 1 else 0
     series = subset.apply(majority_vote, axis=1)
+    # arr = subset.values.astype(int)  # signals already -1, 0, 1
+    # # shift values by +1 into {0,1,2} so we can bincount
+    # arr0 = arr + 1
+    # # build a (n_rows, 3) count matrix
+    # counts = np.apply_along_axis(lambda row: np.bincount(row, minlength=3), 1, arr0)
+    # maxcnt = counts.max(axis=1)[:, None]
+    # winners = np.argmax(counts, axis=1) - 1
+    # # detect ties
+    # tie_mask = (counts == maxcnt).sum(axis=1) > 1
+    # winners[tie_mask] = 0
+    # series = pd.Series(winners, index=subset.index)
     return new_col, series
 
 def generate_consensus_columns_parallel(df: pd.DataFrame, 
@@ -513,8 +528,10 @@ def generate_consensus_columns_parallel(df: pd.DataFrame,
     #     for r in range(3, n+1, 2)
     #     for comb in itertools.combinations(range(n), r)
     # ]
+    combo_counts = math.comb(n, member)
     combos = itertools.combinations(range(n), member)
-
+    print(f"There are {combo_counts} kinds of combination.")
+    
     consensus = {}
     # fut_to_comb record the ERROR comb
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -540,8 +557,12 @@ def generate_consensus_columns_parallel(df: pd.DataFrame,
 def generate_current_decision(df_new: pd.DataFrame,
                               df_subset_voted: pd.DataFrame,
                               result: pd.DataFrame,
-                              pick: int = 1) -> None:
+                              pick: int = 0) -> None:
 
+    if result.empty:
+        print("Error: No valid indicator combinations found.")
+        return
+    
     combo = result["combination"].iat[pick]
     subset_cols = df_new.columns[5:]
     
@@ -558,15 +579,19 @@ def generate_current_decision(df_new: pd.DataFrame,
 
 
 ################################################################################################
-def main(ticket, 
-         threads: int,
-         member: int):
+def main_full(ticker, 
+            threads: int,
+            member: int,
+            start,
+            end,
+            min_trade_counts: int):
 
     if member % 2 == 0:
         print("Error: member must be an odd number", file=sys.stderr)
         sys.exit(1)
     
-    df = fetch_data(ticket)
+
+    df = fetch_data(ticker, start, end)
     df_new = compute_indicators(df)
 
     for col_i in range(5, len(df_new.columns)):
@@ -582,6 +607,12 @@ def main(ticket,
             df_new[['Close']],         
             df_subset_voted[indicators]    
         )
+
+    with open('data.pkl', 'wb') as f:
+        pickle.dump(backtest_res, f)
+    with open('context.pkl', 'wb') as f:
+        # 保存 df_new 與 df_subset_voted
+        pickle.dump((df_new, df_subset_voted), f)
 
     # plotting
     # 1) Scatter: Sharpe vs. Total Return
@@ -631,7 +662,7 @@ def main(ticket,
     plt.savefig('equity_drawdown.png', dpi=300)
     plt.close()
 
-    result = calculate_score(backtest_res)
+    result = calculate_score(backtest_res, min_trade_counts)
     result.to_csv("backtest_results.csv", index=False)
 
     # plot
@@ -640,14 +671,40 @@ def main(ticket,
         backtest_indicator_plot(df_new[['Close']], s, indicators)
 
     # generate current decision using our best indicators combination
-    generate_current_decision(df_new, df_subset_voted, result, pick=1)
+    generate_current_decision(df_new, df_subset_voted, result, pick=0)
+
+
+def main_partial(min_trade_counts):
+    # 只从已保存的 backtest_res 加工
+    if not os.path.exists('data.pkl'):
+        print("Error: data.pkl not found. Cannot run partial mode.")
+        sys.exit(1)
+    with open('data.pkl', 'rb') as f:
+        backtest_res = pickle.load(f)
+
+    result = calculate_score(backtest_res, min_trade_counts)
+    result.to_csv('backtest_results.csv', index=False)
+    print(f"Filtered and wrote backtest_results.csv (min_trades={min_trade_counts})")
+
+    if not os.path.exists('context.pkl'):
+        print("Warning: context.pkl not found. Skipping plots and decision.")
+        return
+    with open('context.pkl', 'rb') as f:
+        df_new, df_subset_voted = pickle.load(f)
+
+    for indicators in result['combination']:
+        s = df_subset_voted[indicators]
+        backtest_indicator_plot(df_new[['Close']], s, indicators)
+
+    generate_current_decision(df_new, df_subset_voted, result, pick=0)
+
 
 
 
 ################################################################################################
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Backtest voting strategy")
-    parser.add_argument("ticket", help="Ticker symbol, e.g. AAPL")
+    parser.add_argument("ticker", help="Ticker symbol, e.g. AAPL")
     parser.add_argument("-t", "--threads", type=int, default=20,
                         help="Number of worker processes (default: 20)")
     parser.add_argument("-m", "--member", type=int, default=7,
@@ -656,6 +713,17 @@ if __name__ == "__main__":
                         help="Start date YYYY-MM-DD (default: earliest)")
     parser.add_argument("-e", "--end",   type=str, default=None,
                         help="End date YYYY-MM-DD (default: today)")
+    parser.add_argument("-m_tc", "--min_trade_counts",   type=int, default=5,
+                        help="Minimum trade counts required to keep the combination (default: 5)")
     args = parser.parse_args()
 
-    main(args.ticket, args.threads, args.member)
+    csv_path = os.path.join(os.path.dirname(__file__), 'backtest_results.csv')
+    if os.path.exists(csv_path):
+        print(f"Detected existing backtest_results.csv, running partial mode.")
+        main_partial(args.min_trade_counts)
+    else:
+        print("No existing backtest_results.csv, running full pipeline.")
+        main_full(
+            args.ticker, args.threads, args.member,
+            args.start, args.end, args.min_trade_counts
+        )

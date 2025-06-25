@@ -31,11 +31,17 @@ python app.py
 ### 2. CLI
 You can also run the following script in terminal directly:
 ```
-python strategy.py <ticker> <threads> <member>
+python VotingVest.py <ticker> -t <threads> -m <member> -s <start> -e <end> -m_tc <min_trade_counts>
 ```
 - [ticker]: (required) stock symbol (e.g., AAPL, MSFT, GOOG)
-- [threads]: (optional) number of worker processes for vote computation; default = 20.
-- [member]: (optional) size of each indicator group (must be odd); default = 7.
+- [-t]: (optional) number of worker processes for vote computation; default = 20.
+- [-m]: (optional) size of each indicator group (must be odd); default = 7.
+- [-s]: (optional) Start date YYYY-MM-DD; default = earliest.
+- [-e]: (optional) End date YYYY-MM-DD; default = today.
+- [-m_tc]: (optional) Minimum trade counts required to keep the combination; default = 5.
+
+**If you run the command again with `backtest_results.csv` already existing in folder, it will only generate figures again with your new input `--min_trade_counts`.**
+
 
 ### The script will:
 
@@ -57,7 +63,7 @@ Happy backtesting and good luck with your trading insights! 🎯
 - Python: Version 3.8 or higher
 - Python Packages:
 ```
-pip install pandas numpy yfinance TA-Lib matplotlib tqdm
+pip install pandas numpy yfinance TA-Lib matplotlib tqdm pickle
 ```
 
 <br>
