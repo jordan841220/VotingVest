@@ -637,7 +637,8 @@ def main_full(ticker,
     pos = df_bt['position']
     entries = df_bt.index[(pos.shift(1)==0)&(pos==1)]
     exits   = df_bt.index[(pos.shift(1)==1)&(pos==0)]
-    if pos.iloc[-1]==1: exits = exits.append(df.Index[-1:])
+    if pos.iloc[-1] == 1:
+        exits = exits.append(pd.Index([df_bt.index[-1]]))
     for e, x in zip(entries, exits):
         trade_returns.append(df_bt.at[x,'Close']/df_bt.at[e,'Close'] - 1)
     plt.figure(figsize=(6,4))
@@ -675,7 +676,7 @@ def main_full(ticker,
 
 
 def main_partial(min_trade_counts):
-    # 只从已保存的 backtest_res 加工
+
     if not os.path.exists('data.pkl'):
         print("Error: data.pkl not found. Cannot run partial mode.")
         sys.exit(1)
