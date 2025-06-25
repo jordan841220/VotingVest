@@ -34,25 +34,25 @@ You can also run the following script in terminal directly:
 python VotingVest.py <ticker> -t <threads> -m <member> -s <start> -e <end> -m_tc <min_trade_counts>
 ```
 - [ticker]: (required) stock symbol (e.g., AAPL, MSFT, GOOG)
-- [-t]: (optional) number of worker processes for vote computation; default = 20.
-- [-m]: (optional) size of each indicator group (must be odd); default = 7.
-- [-s]: (optional) Start date YYYY-MM-DD; default = earliest.
-- [-e]: (optional) End date YYYY-MM-DD; default = today.
-- [-m_tc]: (optional) Minimum trade counts required to keep the combination; default = 5.
+- [-t]: (optional) number of worker processes for vote computation; default = 20
+- [-m]: (optional) size of each indicator group (must be odd); default = 7
+- [-s]: (optional) Start date YYYY-MM-DD; default = earliest
+- [-e]: (optional) End date YYYY-MM-DD; default = today
+- [-m_tc]: (optional) Minimum trade counts required to keep the combination; default = 5
 
-**If you run the command again with `backtest_results.csv` already existing in folder, it will only generate figures again with your new input `--min_trade_counts`.**
+**If `backtest_results.csv` already exists, the script will automatically generate figures again with your new input `--min_trade_counts` without calculating again.**
 
 
 ### The script will:
 
 1. Download historical data (all period) from Yahoo Finance
 2. Compute all technical indicators
-3. Generate signals via **MAJORITY VOTE** over all "odd-length" (specified by [member]) indicator combinations
+3. Generate signals via **MAJORITY VOTE** over all "odd-length" ([-m]) indicator combinations
 4. Backtest each combination’s performance
-5. Rank combinations using Min‑Max normalization and select the top 3 (exclude the combinations with <5 trading counts)
+5. Rank combinations using Min‑Max normalization and select the top 3 (exclude the combinations which trade counts fewer than {min_trade_counts})
 6. Plot performance charts and output today’s recommendation based on the best combo
 
-Happy backtesting and good luck with your trading insights! 🎯
+**Happy backtesting and good luck with your trading insights! 🎯**
 
 
 <br>
