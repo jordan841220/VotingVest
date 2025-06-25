@@ -679,6 +679,7 @@ def main_partial(min_trade_counts):
 
     if not os.path.exists('data.pkl'):
         print("Error: data.pkl not found. Cannot run partial mode.")
+        print("If you wish to run full mode, please remove `backtest_results.csv`")
         sys.exit(1)
     with open('data.pkl', 'rb') as f:
         backtest_res = pickle.load(f)
